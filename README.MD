@@ -13,9 +13,10 @@ Project ID: `focupfjcilraamzwfsuf`
 3. Затем то же самое с [`supabase/migrations/0002_players_replica_identity.sql`](supabase/migrations/0002_players_replica_identity.sql) — без неё удаление игрока (`delete_player`) не долетает до других участников через Realtime (см. комментарий в файле).
 4. Затем [`supabase/migrations/0003_get_player_tokens.sql`](supabase/migrations/0003_get_player_tokens.sql) — добавляет RPC для получения `player_token` (нужно владельцу, чтобы копировать ссылки-приглашения).
 5. Затем [`supabase/migrations/0004_player_self_edit.sql`](supabase/migrations/0004_player_self_edit.sql) — добавляет `rooms.allow_player_edit` и меняет сигнатуру `edit_player` (теперь принимает ещё и `player_token`, чтобы игрок мог редактировать себя, когда владелец это разрешил).
+6. Затем [`supabase/migrations/0005_app_settings.sql`](supabase/migrations/0005_app_settings.sql) — добавляет таблицу `app_settings` (одна строка, `id=1`) с флагом `disable_room_creation`.
 
 Проверить результат:
-- Table Editor → должны появиться `rooms`, `players`, `room_secrets`, `player_secrets`.
+- Table Editor → должны появиться `rooms`, `players`, `room_secrets`, `player_secrets`, `app_settings`.
 - Database → Replication → `supabase_realtime` должна содержать `rooms` и `players`.
 - Storage → должны появиться бакеты `maps` и `avatars` (публичные).
 
@@ -36,7 +37,7 @@ Project ID: `focupfjcilraamzwfsuf`
 
 | Функция | Аргументы | Возвращает | Кто может вызвать |
 |---|---|---|---|
-| `create_room()` | — | `{ room_id, owner_token }` | любой (создание новой комнаты) |
+| `create_room()` | — | `{ room_id, owner_token }` | любой (создание новой комнаты); бросает `room_creation_disabled`, если `app_settings.disable_room_creation = true` |
 | `verify_owner(room_id, owner_token)` | | `boolean` | любой — для проверки валидности admin-ссылки |
 | `update_room_map(room_id, owner_token, background_url)` | | `void` | владелец |
 | `create_player(room_id, owner_token, name, avatar_url?)` | | `{ player_id, player_token }` | владелец |
@@ -48,3 +49,13 @@ Project ID: `focupfjcilraamzwfsuf`
 | `set_player_edit_allowed(room_id, owner_token, allowed)` | | `void` | владелец — включает/выключает возможность игроков редактировать себя |
 
 Картинки (карта, аватары) заливаются напрямую в Storage (`maps/`, `avatars/`) через клиент, в таблицы попадает только публичный URL.
+
+## Глобальные настройки (`app_settings`)
+
+Единственная строка (`id = 1`), которая никогда не редактируется через приложение — только вручную, через Table Editor или SQL Editor в дашборде Supabase:
+
+```sql
+update public.app_settings set disable_room_creation = true where id = 1;
+```
+
+Сейчас один флаг — `disable_room_creation` (по умолчанию `false`). Пока он `true`, `create_room()` бросает ошибку `room_creation_disabled`, и фронтенд показывает кнопку «Создать комнату» задизейбленной с пояснением. Это проверяется на сервере внутри самой RPC-функции, а не только в интерфейсе — прямой вызов RPC в обход UI тоже будет отклонён.
