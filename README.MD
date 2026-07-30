@@ -11,6 +11,7 @@ Project ID: `focupfjcilraamzwfsuf`
 1. Открыть [SQL Editor](https://supabase.com/dashboard/project/focupfjcilraamzwfsuf/sql/new) проекта.
 2. Скопировать содержимое [`supabase/migrations/0001_init.sql`](supabase/migrations/0001_init.sql) целиком, выполнить (Run).
 3. Затем то же самое с [`supabase/migrations/0002_players_replica_identity.sql`](supabase/migrations/0002_players_replica_identity.sql) — без неё удаление игрока (`delete_player`) не долетает до других участников через Realtime (см. комментарий в файле).
+4. Затем [`supabase/migrations/0003_get_player_tokens.sql`](supabase/migrations/0003_get_player_tokens.sql) — добавляет RPC для получения `player_token` (нужно владельцу, чтобы копировать ссылки-приглашения).
 
 Проверить результат:
 - Table Editor → должны появиться `rooms`, `players`, `room_secrets`, `player_secrets`.
@@ -42,5 +43,6 @@ Project ID: `focupfjcilraamzwfsuf`
 | `delete_player(player_id, owner_token)` | | `void` | владелец |
 | `get_player_id_for_token(room_id, player_token)` | | `uuid \| null` | любой — игрок узнаёт, какая фишка его |
 | `move_token(player_id, x, y, owner_token?, player_token?)` | `x`/`y` в процентах 0..100 | `void` | владелец (любая фишка) или игрок (только своя) |
+| `get_player_tokens(room_id, owner_token)` | | `{ player_id, player_token }[]` | владелец — для построения/копирования ссылок-приглашений |
 
 Картинки (карта, аватары) заливаются напрямую в Storage (`maps/`, `avatars/`) через клиент, в таблицы попадает только публичный URL.
