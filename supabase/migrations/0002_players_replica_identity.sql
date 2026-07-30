@@ -1,0 +1,14 @@
+-- Fix: DELETE events on `players` never reached Realtime subscribers
+-- filtered by room_id (e.g. delete_player never showed up for other
+-- clients in the room).
+--
+-- Why: Realtime evaluates a subscription's `filter` (room_id=eq.<id>)
+-- against the row payload. For DELETE, Postgres logical replication only
+-- includes the columns covered by the table's REPLICA IDENTITY in the old
+-- row — by default that's just the primary key (`id`). Since `room_id` is
+-- not part of the primary key, it was missing from the DELETE payload, so
+-- the filter silently never matched and the event was dropped.
+--
+-- Fix: widen REPLICA IDENTITY to include all columns, so DELETE (and
+-- UPDATE) old-row payloads carry room_id too.
+alter table public.players replica identity full;

@@ -6,11 +6,11 @@ Project ID: `focupfjcilraamzwfsuf`
 
 ## Как применить схему
 
-Пока нет Supabase CLI / access token, миграция применяется вручную:
+Пока нет Supabase CLI / access token, миграции применяются вручную, **по порядку номеров**:
 
 1. Открыть [SQL Editor](https://supabase.com/dashboard/project/focupfjcilraamzwfsuf/sql/new) проекта.
-2. Скопировать содержимое [`supabase/migrations/0001_init.sql`](supabase/migrations/0001_init.sql) целиком.
-3. Выполнить (Run).
+2. Скопировать содержимое [`supabase/migrations/0001_init.sql`](supabase/migrations/0001_init.sql) целиком, выполнить (Run).
+3. Затем то же самое с [`supabase/migrations/0002_players_replica_identity.sql`](supabase/migrations/0002_players_replica_identity.sql) — без неё удаление игрока (`delete_player`) не долетает до других участников через Realtime (см. комментарий в файле).
 
 Проверить результат:
 - Table Editor → должны появиться `rooms`, `players`, `room_secrets`, `player_secrets`.
