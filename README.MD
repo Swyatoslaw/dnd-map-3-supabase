@@ -12,6 +12,7 @@ Project ID: `focupfjcilraamzwfsuf`
 2. Скопировать содержимое [`supabase/migrations/0001_init.sql`](supabase/migrations/0001_init.sql) целиком, выполнить (Run).
 3. Затем то же самое с [`supabase/migrations/0002_players_replica_identity.sql`](supabase/migrations/0002_players_replica_identity.sql) — без неё удаление игрока (`delete_player`) не долетает до других участников через Realtime (см. комментарий в файле).
 4. Затем [`supabase/migrations/0003_get_player_tokens.sql`](supabase/migrations/0003_get_player_tokens.sql) — добавляет RPC для получения `player_token` (нужно владельцу, чтобы копировать ссылки-приглашения).
+5. Затем [`supabase/migrations/0004_player_self_edit.sql`](supabase/migrations/0004_player_self_edit.sql) — добавляет `rooms.allow_player_edit` и меняет сигнатуру `edit_player` (теперь принимает ещё и `player_token`, чтобы игрок мог редактировать себя, когда владелец это разрешил).
 
 Проверить результат:
 - Table Editor → должны появиться `rooms`, `players`, `room_secrets`, `player_secrets`.
@@ -39,10 +40,11 @@ Project ID: `focupfjcilraamzwfsuf`
 | `verify_owner(room_id, owner_token)` | | `boolean` | любой — для проверки валидности admin-ссылки |
 | `update_room_map(room_id, owner_token, background_url)` | | `void` | владелец |
 | `create_player(room_id, owner_token, name, avatar_url?)` | | `{ player_id, player_token }` | владелец |
-| `edit_player(player_id, owner_token, name?, avatar_url?)` | | `void` | владелец |
+| `edit_player(player_id, name?, avatar_url?, owner_token?, player_token?)` | | `void` | владелец (любой игрок) или сам игрок (только своя запись, только если `rooms.allow_player_edit = true`) |
 | `delete_player(player_id, owner_token)` | | `void` | владелец |
 | `get_player_id_for_token(room_id, player_token)` | | `uuid \| null` | любой — игрок узнаёт, какая фишка его |
 | `move_token(player_id, x, y, owner_token?, player_token?)` | `x`/`y` в процентах 0..100 | `void` | владелец (любая фишка) или игрок (только своя) |
 | `get_player_tokens(room_id, owner_token)` | | `{ player_id, player_token }[]` | владелец — для построения/копирования ссылок-приглашений |
+| `set_player_edit_allowed(room_id, owner_token, allowed)` | | `void` | владелец — включает/выключает возможность игроков редактировать себя |
 
 Картинки (карта, аватары) заливаются напрямую в Storage (`maps/`, `avatars/`) через клиент, в таблицы попадает только публичный URL.
